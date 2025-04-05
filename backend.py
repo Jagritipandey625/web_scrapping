@@ -7,7 +7,7 @@ app = Flask(__name__, static_folder="static")
 CORS(app)
 
 # 🔥 Absolute file path for CSV file (ensure this is correct)
-CSV_FILE = r"C:\DHP_SEM2\project_graph_wb_scrap\stackoverflow_tags_selected_2023-2025.csv"
+CSV_FILE = os.path.join(os.path.dirname(__file__), "stackoverflow_tags_selected_2023-2025.csv")
 
 # 🔥 Print the CSV file path to check where it's looking for the file
 print(f"Looking for CSV file at: {CSV_FILE}")
