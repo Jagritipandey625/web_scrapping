@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Top Tags Over Years</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #123458, #123458);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 1200px; /* ⬅️ Increased width */
+      width: 95%;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 26px; /* ⬆️ Bigger title */
+      font-weight: bold;
+      color: #00796b;
+      margin-bottom: 1.5rem;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 600px !important; /* ⬆️ Increased height */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📈 Top 10 Programming Tags Over the Years</h2>
+    <canvas id="tagsLineChart"></canvas>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:5000/data";
+
+    const TAG_COLORS = {
+      "python": "#377eb8",
+      "java": "#ff7f00",
+      "javascript": "#4daf4a",
+      "c++": "#984ea3",
+      "c#": "#e41a1c",
+      "html": "#f781bf",
+      "typescript": "#a65628",
+      "react.js": "#fdae61",
+      "android": "#66c2a5",
+      "flutter": "#d73027"
+    };
+
+    let chartInstance;
+
+    async function fetchAndRenderTags() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        const years = new Set();
+        const datasets = [];
+
+        Object.keys(data).forEach(tag => {
+          const tagData = data[tag];
+          tagData.forEach(entry => years.add(entry.Year));
+
+          datasets.push({
+            label: tag,
+            data: Array.from(years).sort().map(year => {
+              const entry = tagData.find(e => e.Year === year);
+              return entry ? parseFloat(entry.Normalized_Count.toFixed(2)) : 0;
+            }),
+            borderColor: TAG_COLORS[tag] || "#000000",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.3
+          });
+        });
+
+        const sortedYears = Array.from(years).sort();
+
+        renderLineChart(sortedYears, datasets);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function renderLineChart(labels, datasets) {
+      const ctx = document.getElementById('tagsLineChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom', // ⬇️ Legend moved to bottom
+              labels: {
+                boxWidth: 20,
+                font: { size: 13 }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Trends of the Top 10 Programming Tags',
+              font: { size: 20 }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Year',
+                font: { size: 14 }
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Normalized Tag Frequency (%)',
+                font: { size: 14 }
+              },
+              ticks: {
+                callback: function (value) {
+                  return value.toFixed(1) + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    fetchAndRenderTags();
+  </script>
+</body>
+</html>
